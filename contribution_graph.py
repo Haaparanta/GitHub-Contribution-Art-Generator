@@ -68,27 +68,6 @@ def text_to_grid(text, width, height):
 
     return grid
 
-def image_to_grid(image_path, width, height):
-    """Convert an image to a grid representation with specified width and height."""
-    from PIL import Image
-    image = Image.open(image_path).convert('L')
-    image = image.resize((width, height), Image.ANTIALIAS)
-    image = np.array(image)
-    normalized_image = (image / 255.0 * 5).astype(int)
-    
-    grid = np.zeros((height, width), dtype=int)
-    for week in range(normalized_image.shape[1]):
-        for day in range(normalized_image.shape[0]):
-            grid[day, week] = normalized_image[day, week]
-
-    # Ensure at least one commit per day
-    for week in range(width):
-        for day in range(height):
-            if grid[day][week] == 0:
-                grid[day][week] = 1
-
-    return grid
-
 def calculate_start_date(year):
     """Calculate the start date for the contribution graph, ensuring it starts on a Sunday."""
     start_date = datetime(year, 1, 2)
@@ -96,34 +75,28 @@ def calculate_start_date(year):
         start_date += timedelta(days=1)
     return start_date
 
+def switch_to_year_branch(year):
+    """Switch to a branch named after the year, creating it if it doesn't exist."""
+    branch_name = str(year)
+    subprocess.call(['git', 'checkout', '-b', branch_name])
+    subprocess.call(['git', 'checkout', branch_name])
+
 def main():
     year = int(input("Enter the year for the contribution graph: "))
-    mode = input("Enter 'text' to create text, 'image' to use an image, or 'date' to display days: ")
+    text = input("Enter the text to display: ")
 
     width = 52
     height = 7
     start_date = calculate_start_date(year)
 
-    if mode == 'text':
-        text = input("Enter the text to display: ")
-        grid = text_to_grid(text, width=width, height=height)
-    elif mode == 'image':
-        image_path = input("Enter the path to the image: ")
-        grid = image_to_grid(image_path, width=width, height=height)
-    elif mode == 'date':
-        grid = [[0] * width for _ in range(height)]
-        print("\nPreview of the contribution graph with days:")
-        display_grid(grid, show_days=True, start_date=start_date)
-        return
-    else:
-        print("Invalid mode selected.")
-        return
+    grid = text_to_grid(text, width=width, height=height)
 
     print("\nPreview of the contribution graph:")
     display_grid(grid)
 
     confirm = input("\nDo you want to proceed with creating the commits? (yes/no): ").strip().lower()
     if confirm == 'yes':
+        switch_to_year_branch(year)
         create_commits(grid, start_date)
         print("Commits created successfully.")
     else:
