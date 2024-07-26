@@ -96,7 +96,7 @@ def main():
 
     confirm = input("\nDo you want to proceed with creating the commits? (yes/no): ").strip().lower()
     if confirm == 'yes':
-        switch_to_year_branch(year)
+        #switch_to_year_branch(year)
         create_commits(grid, start_date)
         print("Commits created successfully.")
     else:
